@@ -1,7 +1,7 @@
 'use client';
 
 import { StoryList } from "@/components/story-list";
-import { LanguageSwitcher } from "@/components/language-switcher";
+import { FloatingControls } from "@/components/floating-controls";
 import { useLanguage } from "@/lib/contexts/language-context";
 
 /**
@@ -26,8 +26,8 @@ export default function Home() {
         <StoryList />
       </main>
 
-      {/* 全局悬浮语言切换按钮 */}
-      <LanguageSwitcher />
+      {/* 全局悬浮控制组件 (语言 + 主题) */}
+      <FloatingControls />
 
       {/* 页脚区域 */}
       <footer className="mt-12 text-center text-sm text-muted-foreground py-8 border-t">

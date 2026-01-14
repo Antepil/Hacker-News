@@ -1,14 +1,12 @@
-'use client';
-
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/lib/contexts/language-context";
-import { Languages } from "lucide-react";
+import { ThemeSwitcher } from "./theme-switcher";
 
 /**
- * 语言切换浮窗组件
- * 固定在页面右下角，用于切换全局语言状态 (中/En)。
+ * 悬浮控制组件
+ * 固定在页面右下角，包含主题切换和语言切换。
  */
-export function LanguageSwitcher() {
+export function FloatingControls() {
     const { language, setLanguage } = useLanguage();
 
     const toggleLanguage = () => {
@@ -16,7 +14,8 @@ export function LanguageSwitcher() {
     };
 
     return (
-        <div className="fixed bottom-4 right-4 z-50">
+        <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-4">
+            <ThemeSwitcher />
             <Button
                 onClick={toggleLanguage}
                 size="icon"
