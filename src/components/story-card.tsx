@@ -1,4 +1,5 @@
 import { ExternalLink, MessageCircle, Clock, TrendingUp, User, Globe } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
 import { Story } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -101,14 +102,23 @@ export function InsightCard({ story }: InsightCardProps) {
                     <div className="flex-1 overflow-y-auto pr-1 min-h-0">
                         <TabsContent value="summary" className="mt-0 h-full">
                             {story.summary ? (
-                                <ul className="space-y-1.5 pb-1">
-                                    {story.summary.map((item, i) => (
-                                        <li key={i} className="text-xs text-slate-600 dark:text-slate-400 flex items-start gap-2 leading-relaxed">
-                                            <span className="block w-1 h-1 mt-1.5 rounded-full bg-emerald-400 shrink-0" />
-                                            <span>{item}</span>
-                                        </li>
-                                    ))}
-                                </ul>
+                                <div className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                                    <ReactMarkdown
+                                        components={{
+                                            ul: ({ ...props }) => <ul className="space-y-1.5 pb-1" {...props} />,
+                                            li: ({ ...props }) => (
+                                                <li className="flex items-start gap-2">
+                                                    <span className="block w-1 h-1 mt-1.5 rounded-full bg-emerald-400 shrink-0" />
+                                                    <span>{props.children}</span>
+                                                </li>
+                                            ),
+                                            strong: ({ ...props }) => <span className="font-semibold text-slate-800 dark:text-slate-200" {...props} />,
+                                            p: ({ ...props }) => <p className="mb-2 last:mb-0" {...props} />
+                                        }}
+                                    >
+                                        {story.summary}
+                                    </ReactMarkdown>
+                                </div>
                             ) : (
                                 <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground gap-2">
                                     <p className="text-[10px] italic">{t('AI Summary not available yet.')}</p>
@@ -118,14 +128,22 @@ export function InsightCard({ story }: InsightCardProps) {
 
                         <TabsContent value="interpretation" className="mt-0 h-full">
                             {story.interpretation ? (
-                                <ul className="space-y-1.5 pb-1">
-                                    {story.interpretation.map((item, i) => (
-                                        <li key={i} className="text-xs text-slate-600 dark:text-slate-400 flex items-start gap-2 leading-relaxed">
-                                            <span className="block w-1 h-1 mt-1.5 rounded-full bg-blue-400 shrink-0" />
-                                            <span>{item}</span>
-                                        </li>
-                                    ))}
-                                </ul>
+                                <div className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                                    <ReactMarkdown
+                                        components={{
+                                            ul: ({ ...props }) => <ul className="space-y-1.5 pb-1" {...props} />,
+                                            li: ({ ...props }) => (
+                                                <li className="flex items-start gap-2">
+                                                    <span className="block w-1 h-1 mt-1.5 rounded-full bg-blue-400 shrink-0" />
+                                                    <span>{props.children}</span>
+                                                </li>
+                                            ),
+                                            p: ({ ...props }) => <p className="mb-2 last:mb-0" {...props} />
+                                        }}
+                                    >
+                                        {story.interpretation}
+                                    </ReactMarkdown>
+                                </div>
                             ) : (
                                 <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground gap-2">
                                     <p className="text-[10px] italic">{t('Interpretation pending.')}</p>
@@ -135,14 +153,22 @@ export function InsightCard({ story }: InsightCardProps) {
 
                         <TabsContent value="comments" className="mt-0 h-full">
                             {story.aiComments ? (
-                                <ul className="space-y-1.5 pb-1">
-                                    {story.aiComments.map((item, i) => (
-                                        <li key={i} className="text-xs text-slate-600 dark:text-slate-400 flex items-start gap-2 leading-relaxed">
-                                            <span className="block w-1 h-1 mt-1.5 rounded-full bg-red-400 shrink-0" />
-                                            <span>{item}</span>
-                                        </li>
-                                    ))}
-                                </ul>
+                                <div className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                                    <ReactMarkdown
+                                        components={{
+                                            ul: ({ ...props }) => <ul className="space-y-1.5 pb-1" {...props} />,
+                                            li: ({ ...props }) => (
+                                                <li className="flex items-start gap-2">
+                                                    <span className="block w-1 h-1 mt-1.5 rounded-full bg-red-400 shrink-0" />
+                                                    <span>{props.children}</span>
+                                                </li>
+                                            ),
+                                            p: ({ ...props }) => <p className="mb-2 last:mb-0" {...props} />
+                                        }}
+                                    >
+                                        {story.aiComments}
+                                    </ReactMarkdown>
+                                </div>
                             ) : (
                                 <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground gap-2">
                                     <p className="text-[10px] italic">{t('AI Comment analysis pending.')}</p>

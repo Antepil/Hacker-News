@@ -1,0 +1,42 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Story {
+  id          Int      @id
+  title       String
+  titleZh     String?  // Translated Chinese title
+  url         String?
+  by          String?
+  score       Int      @default(0)
+  time        Int
+  descendants Int      @default(0)
+  domain      String?
+  kids        String?  // Stored as JSON string of IDs
+  
+  updatedAt   DateTime @updatedAt
+  
+  // Relation to AI Summary
+  aiSummary   AiSummary?
+}
+
+model AiSummary {
+  storyId     Int      @id
+  story       Story    @relation(fields: [storyId], references: [id])
+  
+  technical   String   // Markdown
+  layman      String   // Text
+  comments    String   // Markdown
+  keywords    String   // JSON string of string[]
+  sentiment   String   // JSON string: { constructive: number, technical: number, controversial: number }
+  
+  createdAt   DateTime @default(now())
+}

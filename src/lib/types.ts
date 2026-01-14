@@ -25,15 +25,15 @@ export type Story = Required<Pick<HnItem, 'id' | 'title' | 'time' | 'by' | 'scor
     descendants?: number; // 评论数
     domain?: string;      // 来源域名 (如 nytimes.com)
     titleZh?: string;     // 中文标题 (由服务端翻译并注入)
-    // V0.2 New Fields (Optional for now, populated by Mock Data/AI)
+    // V0.3 AI Fields
     category?: string;
     sentiment?: {
         constructive: number;
         technical: number;
         controversial: number;
     };
-    summary?: string[];
-    interpretation?: string[];
-    aiComments?: string[];
+    summary?: string;        // Markdown: Technical Summary
+    interpretation?: string; // Markdown: Layman Interpretation
+    aiComments?: string;     // Markdown: Comments Summary
     keywords?: string[];
 };

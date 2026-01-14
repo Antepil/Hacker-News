@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/lib/contexts/language-context";
 import { ThemeSwitcher } from "./theme-switcher";
+import { SettingsModal } from "./settings-modal";
 
 /**
  * 悬浮控制组件
@@ -23,6 +24,7 @@ export function FloatingControls() {
             >
                 {language === 'en' ? '中' : 'En'}
             </Button>
+            <SettingsModal />
         </div>
     );
 }

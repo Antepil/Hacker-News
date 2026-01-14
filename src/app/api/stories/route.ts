@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { translate } from 'google-translate-api-x';
 import { Story, HnItem } from '@/lib/types';
+import { prisma } from '@/lib/db';
 
 const HN_BASE_URL = 'https://hacker-news.firebaseio.com/v0';
 
@@ -87,25 +88,39 @@ export async function GET(request: NextRequest) {
         // 5. 再次切片以确保严格符合请求的 limit 数量
         const pagedItems = validItems.slice(0, limit);
 
-        // 6. 数据转换与并行翻译
-        // 在返回给前端前，预先将标题翻译好，避免前端闪烁
+        // 6. DB Lookup for AI Summaries and Translations (Optimization)
+        // Fetch existing summaries from local DB for this batch
+        const summaryMap = new Map();
+        try {
+            const dbSummaries = await prisma.aiSummary.findMany({
+                where: { storyId: { in: pagedItems.map(i => i.id) } }
+            });
+            dbSummaries.forEach(s => summaryMap.set(s.storyId, s));
+        } catch (e) {
+            console.error('DB Fetch Failed:', e);
+        }
+
+        // 7. Data Transformation & Parallel Translation
         const stories: Story[] = await Promise.all(pagedItems.map(async (item) => {
             let domain = '';
             if (item.url) {
                 try {
-                    // 提取域名用于 UI 展示 (如 github.com)
                     const u = new URL(item.url);
                     domain = u.hostname.replace('www.', '');
                 } catch (e) { }
             }
 
-            // 并行执行翻译任务
+            // Get AI Summary if exists
+            const aiData = summaryMap.get(item.id);
+
+            // Parallel Translation (if not in DB/Wait for separate translation service)
+            // For now keeping per-request translation as fallback
             const titleZh = await translateTitle(item.id, item.title || '');
 
-            return {
+            const story: Story = {
                 id: item.id,
                 title: item.title || 'Untitled',
-                titleZh: titleZh, // 附带中文标题
+                titleZh: titleZh,
                 by: item.by || 'Unknown',
                 time: item.time || Date.now() / 1000,
                 score: item.score || 0,
@@ -113,6 +128,21 @@ export async function GET(request: NextRequest) {
                 url: item.url,
                 domain,
             };
+
+            // Attach AI Data if available
+            if (aiData) {
+                story.summary = aiData.technical;
+                story.interpretation = aiData.layman;
+                story.aiComments = aiData.comments;
+                try {
+                    story.keywords = JSON.parse(aiData.keywords);
+                    story.sentiment = JSON.parse(aiData.sentiment);
+                } catch (e) {
+                    // Safe fallback for parsing errors
+                }
+            }
+
+            return story;
         }));
 
         return NextResponse.json(stories);

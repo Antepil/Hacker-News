@@ -1,12 +1,22 @@
-import { MOCK_STORIES } from '@/lib/mock-data';
+'use client';
+
+import useSWR from 'swr';
 import { InsightCard } from './story-card';
+import { Story } from '@/lib/types';
 import { useLanguage } from '@/lib/contexts/language-context';
+
+const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 export function StoryList() {
     const { t } = useLanguage();
+    const { data: stories, error, isLoading } = useSWR<Story[]>('/api/stories', fetcher);
 
-    // V0.2 Requirement: Enforce Mock Data for UI demonstration
-    const stories = MOCK_STORIES;
+    if (error) return <div className="text-center py-10 text-red-500">{t('Failed to load stories.')}</div>;
+    if (isLoading) return <div className="text-center py-10">{t('Loading stories...')}</div>;
+
+    if (!stories || stories.length === 0) {
+        return <div className="text-center py-10 text-muted-foreground">{t('No stories found.')}</div>;
+    }
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
