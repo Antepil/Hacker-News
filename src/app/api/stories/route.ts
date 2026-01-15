@@ -95,7 +95,7 @@ export async function GET(request: NextRequest) {
             const dbSummaries = await prisma.aiSummary.findMany({
                 where: { storyId: { in: pagedItems.map(i => i.id) } }
             });
-            dbSummaries.forEach(s => summaryMap.set(s.storyId, s));
+            dbSummaries.forEach((s: any) => summaryMap.set(s.storyId, s));
         } catch (e) {
             console.error('DB Fetch Failed:', e);
         }

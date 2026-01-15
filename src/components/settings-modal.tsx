@@ -22,6 +22,7 @@ export function SettingsModal() {
     const [model, setModel] = useState('gpt-4o');
     const [provider, setProvider] = useState('openai');
     const [isOpen, setIsOpen] = useState(false);
+    const [isPinging, setIsPinging] = useState(false);
 
     // Load from LocalStorage on mount
     useEffect(() => {
@@ -44,6 +45,56 @@ export function SettingsModal() {
                 description: t('Your API key will be used for future AI summaries.')
             });
             setIsOpen(false);
+        }
+    };
+
+    const handlePing = async () => {
+        if (!apiKey) {
+            toast.error(t('API Key Required'), {
+                description: t('Please enter your API Key first.')
+            });
+            return;
+        }
+
+        setIsPinging(true);
+        try {
+            // Use our own server-side proxy to avoid CORS issues
+            const res = await fetch('/api/ping', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    provider,
+                    apiKey,
+                    baseUrl: baseUrl || undefined, // Send undefined if empty so backend uses logic
+                    model: model || undefined
+                })
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) {
+                throw new Error(data.error || `Status ${res.status}`);
+            }
+
+            toast.success(t('Connection Successful!'), {
+                description: (
+                    <div className="flex flex-col gap-1">
+                        <span>{t('Your API key is valid.')}</span>
+                        <span className="text-xs text-muted-foreground font-mono bg-muted p-1 rounded">
+                            {t('Response')}: {data.data.choices?.[0]?.message?.content || JSON.stringify(data.data).slice(0, 50)}
+                        </span>
+                    </div>
+                )
+            });
+        } catch (error: any) {
+            console.error('Ping error:', error);
+            toast.error(t('Connection Failed'), {
+                description: error.message || t('Could not connect to AI provider.')
+            });
+        } finally {
+            setIsPinging(false);
         }
     };
 
@@ -136,8 +187,24 @@ export function SettingsModal() {
                         />
                     </div>
                 </div>
-                <DialogFooter>
-                    <Button onClick={handleSave} className="w-full">
+                <DialogFooter className="flex flex-row justify-between w-full">
+                    <Button
+                        type="button"
+                        variant="secondary"
+                        disabled={isPinging}
+                        onClick={handlePing}
+                        className="w-1/3"
+                    >
+                        {isPinging ? (
+                            <div className="flex items-center gap-2">
+                                <div className="h-4 w-4 animate-spin rounded-full border-2 border-slate-500 border-t-transparent" />
+                                {t('Testing...')}
+                            </div>
+                        ) : (
+                            t('Test Connection')
+                        )}
+                    </Button>
+                    <Button onClick={handleSave} className="w-1/2">
                         <Save className="w-4 h-4 mr-2" />
                         {t('Save Changes') || 'Save Changes'}
                     </Button>

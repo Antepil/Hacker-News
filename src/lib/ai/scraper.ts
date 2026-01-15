@@ -40,6 +40,6 @@ export async function scrapeStoryContent(url: string | undefined): Promise<strin
 
     } catch (error) {
         console.warn(`[Scraper] Error fetching ${url}:`, error);
-        return '';
+        throw error; // Re-throw to let caller handle "fetch failed" logic
     }
 }
