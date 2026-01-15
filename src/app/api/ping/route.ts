@@ -84,6 +84,22 @@ export async function POST(req: NextRequest) {
         }
 
         const data = await res.json();
+
+        // STRICT VALIDATION: Check for provider-specific error fields in the body
+        // MiniMax: Returns 200 but has base_resp.status_code != 0 (e.g., 1004 for auth error)
+        if (data.base_resp && data.base_resp.status_code !== 0) {
+            return NextResponse.json({
+                error: `MiniMax Error: ${data.base_resp.status_msg} (Code ${data.base_resp.status_code})`
+            }, { status: 400 });
+        }
+
+        // OpenAI/Generic: Check for top-level 'error' object
+        if (data.error) {
+            return NextResponse.json({
+                error: `Provider Error: ${data.error.message || JSON.stringify(data.error)}`
+            }, { status: 400 });
+        }
+
         return NextResponse.json({ success: true, data });
 
     } catch (error: any) {

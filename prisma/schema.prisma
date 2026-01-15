@@ -12,6 +12,7 @@ datasource db {
 
 model Story {
   id          Int      @id
+  status      String   @default("PENDING") // PENDING, COMPLETED
   title       String
   titleZh     String?  // Translated Chinese title
   url         String?
@@ -39,4 +40,10 @@ model AiSummary {
   sentiment   String   // JSON string: { constructive: number, technical: number, controversial: number }
   
   createdAt   DateTime @default(now())
+}
+
+model CronLock {
+  id        String   @id
+  lockedAt  DateTime
+  expiresAt DateTime
 }
