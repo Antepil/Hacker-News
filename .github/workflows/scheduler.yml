@@ -1,0 +1,25 @@
+name: Trigger Vercel Cron
+
+on:
+  schedule:
+    # Run every 30 minutes
+    - cron: '*/30 * * * *'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  ping-cron:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Fetch News
+        run: |
+          # Replace with your actual deployed Vercel URL in GitHub Secrets or here
+          # We use a custom header if you implemented CRON_SECRET authentication (highly recommended)
+          # For public access (if unprotected):
+          curl -X GET "${{ secrets.VERCEL_PROJECT_URL }}/api/cron/fetch"
+          
+      - name: Wait for Fetch
+        run: sleep 60
+
+      - name: Trigger Process News
+        run: |
+          curl -X GET "${{ secrets.VERCEL_PROJECT_URL }}/api/cron/process-news"
