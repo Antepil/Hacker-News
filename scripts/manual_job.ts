@@ -56,6 +56,7 @@ async function main() {
                                 domain,
                                 kids: item.kids ? JSON.stringify(item.kids) : undefined,
                                 commentsDump: item.commentsDump, // Store Comments Dump
+                                text: item.text // Store content for Ask HN
                                 // Update status if needed, or keep it
                             }
                         });
@@ -84,6 +85,7 @@ async function main() {
                                 domain,
                                 kids: item.kids ? JSON.stringify(item.kids) : undefined,
                                 commentsDump: item.commentsDump, // Store Comments Dump
+                                text: item.text, // Store content for Ask HN
                                 status: 'PENDING',
                             }
                         });

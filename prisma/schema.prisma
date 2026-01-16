@@ -23,6 +23,7 @@ model Story {
   domain      String?
   type        String? // story, comment, job, etc.
   kids        String? // Stored as JSON string of IDs
+  text        String? // Ask HN content or internal text
   commentsDump String? // Stored as formatted text: "[Comment 1]: text..."
 
   updatedAt DateTime @updatedAt

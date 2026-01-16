@@ -64,7 +64,7 @@ export async function fetchTopStoryIds(limit = 30): Promise<number[]> {
  * Optimized for Algolia: Single request returns nested children.
  */
 // Helper to strip HTML tags (basic approach)
-function stripHtml(html: string): string {
+export function stripHtml(html: string): string {
     return html.replace(/<[^>]*>?/gm, '')
         .replace(/&quot;/g, '"')
         .replace(/&amp;/g, '&')

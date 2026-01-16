@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { fetchTopStoryIds, fetchStoryWithComments } from '@/lib/ai/fetcher';
+import { fetchTopStoryIds, fetchStoryWithComments, stripHtml } from '@/lib/ai/fetcher';
 import { generateStorySummary } from '@/lib/ai/service';
 import { scrapeStoryContent } from '@/lib/ai/scraper';
 
@@ -61,6 +61,7 @@ export async function GET() {
                         points: story.points || 0,
                         numComments: story.numComments || 0,
                         kids: JSON.stringify(story.kids || []),
+                        text: story.text || null, // Capture Ask HN text
                     }
                 });
 
@@ -83,42 +84,22 @@ export async function GET() {
                 }
 
                 // "If capture fails... skip AI summary"
-                // We'll consider 'failed' or empty content as a reason to skip IF the user strictly wants that.
-                // However, usually AI can still summarize based on Title + Comments.
-                // The user request says: "If capture fails... mark as 'capture failed', skip AI summary, only store title and link."
-                // So strict compliance:
-                if (scrapeStatus === 'failed') {
-                    console.log(`[Process-News] Skipping AI for ${id} due to scrape failure.`);
+                // But for "Ask HN" with internal text, we want to use that.
+
+                // Fallback Logic:
+                // 1. If scrape failed or no URL, AND we have story.text, use story.text (cleaned)
+                // 2. Otherwise strict skip if scrape failed and no text.
+
+                if (!articleContent && story.text) {
+                    console.log(`[Process-News] Using internal text (Ask HN) for ${id}...`);
+                    articleContent = stripHtml(story.text).trim();
+                }
+
+                if (!articleContent && scrapeStatus === 'failed') {
+                    console.log(`[Process-News] Skipping AI for ${id} due to scrape failure and no internal text.`);
                     results.push({ id, status: 'skipped_scrape_failed' });
                     continue;
                 }
-
-                // NOTE: 'empty_content' (e.g. SPA or simple page) might validly return empty string but not be an error.
-                // But let's assume if we strictly followed instructions, only 'failed' stops it.
-                // Wait, if scrape returns empty string, is it "failed"? scrapeStoryContent catches errors and returns ''.
-                // I should update scraper to throw or return null to distinguish.
-                // For now, let's treat '' as "content not available but not critical failure" unless the user means otherwise.
-                // Actually, let's look at the instruction: "If capture fails or timeout... mark as fetch failed..."
-                // My scraper returns '' on error. So I should check if it's empty AND likely an error?
-                // Or better: Let's assume if I have NO content, I shouldn't burn tokens if the instruction says so.
-                // Let's rely on my previous context: "rely on title and comments" was my previous approach.
-                // But this NEW request says "Skip AI summary".
-                // I'll stick to: If url exists AND content is empty string -> likely failed/SPA -> Skip AI?
-                // Let's handle explicit error in scraper if possible, or just treat empty string as "failed to get content".
-                // But many HN links are PDFs or Videos where scrape is empty. Skipping AI entirely means no item in "feed" (since feed relies on AI summary)?
-                // Actually the feed shows items with DB persistence.
-                // If I skip AI, `aiSummary` remains null. The item will be picked up again by next Cron!
-                // This would cause infinite loop of re-processing "failed" items.
-                // The user says "mark as 'capture failed'". I might need a flag in DB or just log it.
-                // To avoid infinite loop, I must mark it as processed or "ignore".
-                // The requirements mentions "FAILED: AI generation failed... > 3 times mark as IGNORING".
-                // For this strict request, I will just Log it and continue to next item, leaving it for retry or distinct handling.
-                // But to prevent infinite loop in "Step 2 filtering", I should probably save a 'failed' summary or flag.
-                // Prisma Schema has `aiSummary`. I can't store "failed".
-                // I will skip AI but I won't mark it "processed" in a way that stops retry, unless I add a specific field to Story.
-                // For this iteration, strictly following "skip AI summary", implies we DO NOT create `aiSummary`.
-                // This WILL cause it to be picked up again.
-                // I will Add a TODO comment about this potential loop.
 
                 // Step 4: AI Processing
                 console.log(`[Process-News] Generating AI for ${id}...`);
