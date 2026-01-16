@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { acquireLock, releaseLock } from '@/lib/cron-lock';
 import { fetchTopStoryIds, fetchItem } from '@/lib/hn-service';
+import { fetchStoryWithComments } from '@/lib/ai/fetcher';
 
 export const dynamic = 'force-dynamic'; // Ensure this route is not cached by Next.js by default
 export const maxDuration = 60; // Allow 60 seconds (Vercel max for Hobby)
@@ -46,23 +47,28 @@ export async function GET() {
                 });
 
                 if (existing) {
+                    // Fetch Full Story + Comments using AI Fetcher
+                    const result = await fetchStoryWithComments(id);
+                    if (!result) return;
+                    const { story: item } = result;
+
                     if (existing.status === 'COMPLETED') {
                         // Update timestamp to keep it fresh
                         await prisma.story.update({
                             where: { id },
                             data: {
-                                score: existing.score, // Touch to update updatedAt
+                                points: existing.points, // Touch to update updatedAt
                             }
                         });
 
                         // Re-fetch details for stats updates
-                        const item = await fetchItem(id);
                         if (item) {
                             await prisma.story.update({
                                 where: { id },
                                 data: {
-                                    score: item.score || 0,
-                                    descendants: item.descendants || 0,
+                                    points: item.points || 0,
+                                    numComments: item.numComments || 0,
+                                    commentsDump: item.commentsDump, // Store Comments Dump
                                 }
                             });
                         }
@@ -84,10 +90,10 @@ export async function GET() {
                                 data: {
                                     title: item.title || 'Untitled',
                                     url: item.url,
-                                    by: item.by,
-                                    score: item.score || 0,
-                                    time: item.time,
-                                    descendants: item.descendants || 0,
+                                    author: item.author,
+                                    points: item.points || 0,
+                                    postedAt: item.postedAt,
+                                    numComments: item.numComments || 0,
                                     domain,
                                     kids: item.kids ? JSON.stringify(item.kids) : undefined,
                                 }
@@ -112,10 +118,10 @@ export async function GET() {
                                 id: item.id,
                                 title: item.title || 'Untitled',
                                 url: item.url,
-                                by: item.by,
-                                score: item.score || 0,
-                                time: item.time,
-                                descendants: item.descendants || 0,
+                                author: item.author,
+                                points: item.points || 0,
+                                postedAt: item.postedAt,
+                                numComments: item.numComments || 0,
                                 domain,
                                 kids: item.kids ? JSON.stringify(item.kids) : undefined,
                                 status: 'PENDING',

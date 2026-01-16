@@ -38,7 +38,7 @@ export async function GET() {
 
             // 3. Generate AI content
             console.log(`[Cron] Generating AI for ${id}...`);
-            const summary = await generateStorySummary(story, commentsText, articleContent);
+            const summary = await generateStorySummary(story, story.commentsDump || '', articleContent);
 
             if (summary) {
                 // 3. Save to DB (Transactional)
@@ -47,17 +47,17 @@ export async function GET() {
                     await tx.story.upsert({
                         where: { id: story.id },
                         update: {
-                            score: story.score || 0,
-                            descendants: story.descendants || 0,
+                            points: story.points || 0,
+                            numComments: story.numComments || 0,
                         },
                         create: {
                             id: story.id,
                             title: story.title || 'Untitled',
                             url: story.url,
-                            by: story.by,
-                            time: story.time || Math.floor(Date.now() / 1000),
-                            score: story.score || 0,
-                            descendants: story.descendants || 0,
+                            author: story.author,
+                            postedAt: story.postedAt || Math.floor(Date.now() / 1000),
+                            points: story.points || 0,
+                            numComments: story.numComments || 0,
                             kids: JSON.stringify(story.kids || []),
                             // titleZh: will be translated on-demand or separate worker
                         }

@@ -49,17 +49,17 @@ export async function GET() {
                 await prisma.story.upsert({
                     where: { id: story.id },
                     update: {
-                        score: story.score || 0,
-                        descendants: story.descendants || 0,
+                        points: story.points || 0,
+                        numComments: story.numComments || 0,
                     },
                     create: {
                         id: story.id,
                         title: story.title || 'Untitled',
                         url: story.url,
-                        by: story.by,
-                        time: story.time || Math.floor(Date.now() / 1000),
-                        score: story.score || 0,
-                        descendants: story.descendants || 0,
+                        author: story.author,
+                        postedAt: story.postedAt || Math.floor(Date.now() / 1000),
+                        points: story.points || 0,
+                        numComments: story.numComments || 0,
                         kids: JSON.stringify(story.kids || []),
                     }
                 });
@@ -122,7 +122,7 @@ export async function GET() {
 
                 // Step 4: AI Processing
                 console.log(`[Process-News] Generating AI for ${id}...`);
-                const summary = await generateStorySummary(story, commentsText, articleContent);
+                const summary = await generateStorySummary(story, story.commentsDump || '', articleContent);
 
                 if (summary) {
                     // Step 5: Upsert DB
@@ -130,8 +130,11 @@ export async function GET() {
                         data: {
                             storyId: story.id,
                             technical: summary.technical,
+                            technicalZh: summary.technicalZh, // New
                             layman: summary.layman,
+                            laymanZh: summary.laymanZh, // New
                             comments: summary.comments,
+                            commentsZh: summary.commentsZh, // New
                             keywords: JSON.stringify(summary.keywords),
                             sentiment: JSON.stringify(summary.sentiment)
                         }

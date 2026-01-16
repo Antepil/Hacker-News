@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { translate } from 'google-translate-api-x';
 import { Story, HnItem } from '@/lib/types';
 import { prisma } from '@/lib/db';
-import { fetchTopStoryIds, fetchItem } from '@/lib/hn-service';
 
 const HN_BASE_URL = 'https://hacker-news.firebaseio.com/v0';
 
@@ -46,81 +45,59 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '30');
 
     try {
-        // 1. 获取所有 Top Stories ID
-        const allIds = await fetchTopStoryIds();
-
-        // 2. 分页策略：
-        // 为了过滤掉死链 (dead/deleted) 并保证每页返回足量的数据，
-        // 我们预取 1.5 倍数量的 ID 作为候选集。
-        const start = (page - 1) * limit;
-        const end = start + Math.ceil(limit * 1.5);
-        const candidateIds = allIds.slice(start, end);
-
-        // 3. 并发获取 Item 详情
-        const itemPromises = candidateIds.map(id => fetchItem(id));
-        const items = await Promise.all(itemPromises);
-
-        // 4. 过滤无效数据 (null, deleted, dead)
-        const validItems = items.filter((item): item is HnItem => {
-            if (!item) return false;
-            if (item.deleted || item.dead) return false;
-            return true;
+        // 1. Fetch Stories directly from DB
+        // User requested "latest 30 posts" from DB.
+        const storiesFromDb = await prisma.story.findMany({
+            orderBy: { postedAt: 'desc' },
+            skip: (page - 1) * limit,
+            take: limit,
+            include: {
+                aiSummary: true
+            }
         });
 
-        // 5. 再次切片以确保严格符合请求的 limit 数量
-        const pagedItems = validItems.slice(0, limit);
+        // 2. Data Transformation & Translation
+        const stories: Story[] = await Promise.all(storiesFromDb.map(async (dbStory: any) => {
+            // Translation Fallback: If DB doesn't have titleZh, try on-the-fly translation
+            let titleZh = dbStory.titleZh || '';
+            if (!titleZh && dbStory.title) {
+                titleZh = await translateTitle(dbStory.id, dbStory.title);
+            }
 
-        // 6. DB Lookup for AI Summaries and Translations (Optimization)
-        // Fetch existing summaries from local DB for this batch
-        const summaryMap = new Map();
-        try {
-            const dbSummaries = await prisma.aiSummary.findMany({
-                where: { storyId: { in: pagedItems.map(i => i.id) } }
-            });
-            dbSummaries.forEach((s: any) => summaryMap.set(s.storyId, s));
-        } catch (e) {
-            console.error('DB Fetch Failed:', e);
-        }
+            const story: Story = {
+                id: dbStory.id,
+                title: dbStory.title,
+                titleZh: titleZh, // Use DB value or translated value
+                author: dbStory.author || 'Unknown',
+                postedAt: dbStory.postedAt,
+                points: dbStory.points,
+                numComments: dbStory.numComments,
+                url: dbStory.url || undefined,
+                domain: dbStory.domain || undefined, // Use DB domain if available
+            };
 
-        // 7. Data Transformation & Parallel Translation
-        const stories: Story[] = await Promise.all(pagedItems.map(async (item) => {
-            let domain = '';
-            if (item.url) {
+            // Calculate domain if missing in DB but URL exists (just in case)
+            if (!story.domain && story.url) {
                 try {
-                    const u = new URL(item.url);
-                    domain = u.hostname.replace('www.', '');
+                    const u = new URL(story.url);
+                    story.domain = u.hostname.replace('www.', '');
                 } catch (e) { }
             }
 
-            // Get AI Summary if exists
-            const aiData = summaryMap.get(item.id);
-
-            // Parallel Translation (if not in DB/Wait for separate translation service)
-            // For now keeping per-request translation as fallback
-            const titleZh = await translateTitle(item.id, item.title || '');
-
-            const story: Story = {
-                id: item.id,
-                title: item.title || 'Untitled',
-                titleZh: titleZh,
-                by: item.by || 'Unknown',
-                time: item.time || Date.now() / 1000,
-                score: item.score || 0,
-                descendants: item.descendants || 0,
-                url: item.url,
-                domain,
-            };
-
-            // Attach AI Data if available
-            if (aiData) {
-                story.summary = aiData.technical;
-                story.interpretation = aiData.layman;
-                story.aiComments = aiData.comments;
+            // Map AI Summary fields
+            if (dbStory.aiSummary) {
+                story.summary = dbStory.aiSummary.technical;
+                story.interpretation = dbStory.aiSummary.layman;
+                story.aiComments = dbStory.aiSummary.comments; // Mapping AiSummary.comments to Frontend aiComments
+                // Map Chinese fields
+                story.summaryZh = dbStory.aiSummary.technicalZh;
+                story.interpretationZh = dbStory.aiSummary.laymanZh;
+                story.aiCommentsZh = dbStory.aiSummary.commentsZh;
                 try {
-                    story.keywords = JSON.parse(aiData.keywords);
-                    story.sentiment = JSON.parse(aiData.sentiment);
+                    story.keywords = JSON.parse(dbStory.aiSummary.keywords);
+                    story.sentiment = JSON.parse(dbStory.aiSummary.sentiment);
                 } catch (e) {
-                    // Safe fallback for parsing errors
+                    // Safe fallback
                 }
             }
 
@@ -129,8 +106,12 @@ export async function GET(request: NextRequest) {
 
         return NextResponse.json(stories);
 
-    } catch (error) {
+    } catch (error: any) {
         console.error('API Error:', error);
-        return NextResponse.json({ error: 'Failed to fetch stories' }, { status: 500 });
+        return NextResponse.json({
+            error: 'Failed to fetch stories',
+            details: error?.message || String(error),
+            stack: error?.stack
+        }, { status: 500 });
     }
 }

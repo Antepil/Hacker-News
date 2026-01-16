@@ -3,8 +3,11 @@ import { HnItem } from '@/lib/types';
 
 export interface GeneratedSummary {
     technical: string;
+    technicalZh: string; // New
     layman: string;
+    laymanZh: string; // New
     comments: string;
+    commentsZh: string; // New
     keywords: string[];
     sentiment: {
         constructive: number;
@@ -23,13 +26,13 @@ export interface AiConfig {
 /**
  * Generate AI Summary for a Story
  * @param story The HN Story object
- * @param commentsText Top comment texts
+ * @param commentsDump Formatted comments string ("[Comment 1]: ...")
  * @param articleContent The actual scraped text of the article
  * @param config Optional configuration (BYOK)
  */
 export async function generateStorySummary(
     story: HnItem,
-    commentsText: string[],
+    commentsDump: string,
     articleContent: string,
     config: AiConfig = {}
 ): Promise<GeneratedSummary | null> {
@@ -58,13 +61,18 @@ export async function generateStorySummary(
   """
 
   Top Comments:
-  ${commentsText.map(c => `- ${c.slice(0, 300)}`).join('\n')}
+  ${commentsDump}
 
-  Output a valid JSON object with the following structure (do NOT use Markdown code blocks, just raw JSON):
+  Output a valid JSON object. Ensure all strings are properly escaped (e.g., " should be \").
+  Do NOT use Markdown code blocks. Just output the raw JSON string.
+  Structure:
   {
     "technical": "3 bullet points summary using Markdown (bullet points start with -). Focus on the core technical details from the Article Content.",
+    "technicalZh": "Translate the technical summary into Professional Chinese (Markdown bullet points).",
     "layman": "One short paragraph explaining the significance in plain English.",
-    "comments": "Summary of user discussion/controversy using Markdown. Focus on the Top Comments.",
+    "laymanZh": "Translate the layman summary into Chinese.",
+    "comments": "Provide exactly 3 distinct interpretations/takeaways from the comments. Format as a Markdown list with 3 bullet points. Each point should capture a unique perspective or valid criticism found in the discussion.",
+    "commentsZh": "Translate the comments interpretations into Chinese (Markdown bullet points).",
     "keywords": ["tag1", "tag2", "tag3"],
     "sentiment": {
        "constructive": 0-100,
@@ -122,7 +130,7 @@ async function generateMiniMax(apiKey: string, endpoint: string, model: string, 
             }
         ],
         stream: false,
-        max_tokens: 1000 // Safe limit
+        max_tokens: 16000 // Increased requested by usage
     };
 
     const response = await fetch(endpoint, {
@@ -145,8 +153,13 @@ async function generateMiniMax(apiKey: string, endpoint: string, model: string, 
     // Assuming choices[0].message.content or similar
     const content = data.choices?.[0]?.message?.content || data.reply || data.base_resp?.status_msg;
 
-    // If the content is wrapped in markdown code blocks ```json ... ```, strip them
-    const jsonString = content.replace(/^```json\s*|\s*```$/g, '');
+    // Strip Markdown code blocks more robustly
+    const jsonString = content.replace(/```json/g, '').replace(/```/g, '').trim();
 
-    return JSON.parse(jsonString) as GeneratedSummary;
+    try {
+        return JSON.parse(jsonString) as GeneratedSummary;
+    } catch (e) {
+        console.error(`[MiniMax] JSON Parse Error. Raw Content:`, content);
+        throw e;
+    }
 }

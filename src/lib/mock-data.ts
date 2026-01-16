@@ -7,10 +7,11 @@ export const MOCK_STORIES: Story[] = [
         titleZh: "Redis 宣布修改开源协议",
         url: "https://redis.io/blog/redis-adopts-dual-source-available-licensing/",
         domain: "redis.io",
-        score: 450,
-        by: "antirez",
-        time: Math.floor(Date.now() / 1000) - 7200, // 2 hours ago
-        descendants: 120,
+
+        points: 450,
+        author: "antirez",
+        postedAt: Math.floor(Date.now() / 1000) - 7200, // 2 hours ago
+        numComments: 120,
         category: "编程开发",
         sentiment: {
             constructive: 20,
@@ -34,10 +35,11 @@ export const MOCK_STORIES: Story[] = [
         titleZh: "零利率时代的终结与科技圈的清算",
         url: "https://www.economist.com/finance-and-economics/2026/01/14/tech-reckoning",
         domain: "economist.com",
-        score: 890,
-        by: "economist_fan",
-        time: Math.floor(Date.now() / 1000) - 18000, // 5 hours ago
-        descendants: 340,
+
+        points: 890,
+        author: "economist_fan",
+        postedAt: Math.floor(Date.now() / 1000) - 18000, // 5 hours ago
+        numComments: 340,
         category: "商业财经",
         sentiment: {
             constructive: 40,
@@ -61,10 +63,11 @@ export const MOCK_STORIES: Story[] = [
         titleZh: "Show HN: 我用 Rust 写了一个浏览器引擎",
         url: "https://github.com/rust-browser/engine",
         domain: "github.com",
-        score: 1200,
-        by: "rustacean_01",
-        time: Math.floor(Date.now() / 1000) - 3600, // 1 hour ago
-        descendants: 85,
+
+        points: 1200,
+        author: "rustacean_01",
+        postedAt: Math.floor(Date.now() / 1000) - 3600, // 1 hour ago
+        numComments: 85,
         category: "开源项目",
         sentiment: {
             constructive: 80,
@@ -88,10 +91,11 @@ export const MOCK_STORIES: Story[] = [
         titleZh: "通过可视化理解 Transformer 架构",
         url: "https://bbycroft.net/llm",
         domain: "bbycroft.net",
-        score: 670,
-        by: "viz_master",
-        time: Math.floor(Date.now() / 1000) - 86400, // 1 day ago
-        descendants: 56,
+
+        points: 670,
+        author: "viz_master",
+        postedAt: Math.floor(Date.now() / 1000) - 86400, // 1 day ago
+        numComments: 56,
         category: "人工智能",
         sentiment: {
             constructive: 90,
@@ -112,29 +116,60 @@ export const MOCK_STORIES: Story[] = [
     {
         id: 3920196,
         title: "Ask HN: Who is hiring? (January 2026)",
-        titleZh: "Ask HN: 谁在招聘？(2026年1月)",
-        url: "", // Internal
-        domain: "",
-        score: 800,
-        by: "whoishiring",
-        time: Math.floor(Date.now() / 1000) - 400000,
-        descendants: 900,
-        category: "职场生涯",
-        sentiment: {
-            constructive: 50,
-            technical: 0,
-            controversial: 50
-        },
-        summary: `- 本月招聘贴。
-- 远程岗位明显减少。
-- AI 相关岗位占据了半壁江山。`,
-        interpretation: `- 普通前后端开发的岗位竞争极其惨烈。
-- 薪资两极分化：AI 专家年薪百万，普通开发不如两年前。
-- 可以看出市场正在缓慢复苏，但方向变了。`,
-        aiComments: `- 投了 50 份简历，只有 2 个回音...
-- 这时候还在招人的公司才是真有钱。
-- Remote work is dying.`,
-        keywords: ["Hiring", "Jobs", "Remote", "Career"]
+        titleZh: "使用 SQLite 作为基于文件的键值对存储",
+        author: "user1",
+        points: 156,
+        postedAt: 1705293400,
+        numComments: 45,
+        domain: "sqlite.org"
+    },
+    {
+        id: 2,
+        title: "The State of JS 2023",
+        titleZh: "2023 JavaScript 现状调查报告",
+        author: "js_fan",
+        points: 342,
+        postedAt: 1705290000,
+        numComments: 128,
+        domain: "stateofjs.com"
+    },
+    {
+        id: 3,
+        title: "Show HN: My new project",
+        titleZh: "Show HN: 我的新项目",
+        author: "maker_tom",
+        points: 89,
+        postedAt: 1705288000,
+        numComments: 23,
+    },
+    {
+        id: 4,
+        title: "Why I stopped using React",
+        titleZh: "为什么我停止使用 React",
+        author: "angry_dev",
+        points: 567,
+        postedAt: 1705280000,
+        numComments: 340,
+        domain: "blog.example.com"
+    },
+    {
+        id: 5,
+        title: "Launch HN: Startup (YC W24)",
+        titleZh: "Launch HN: Startup (YC W24)",
+        author: "founder_alice",
+        points: 230,
+        postedAt: 1705275000,
+        numComments: 89,
+    },
+    {
+        id: 6,
+        title: "Understanding CSS Grid",
+        titleZh: "理解 CSS 网格布局",
+        author: "css_wizard",
+        points: 120,
+        postedAt: 1705270000,
+        numComments: 30,
+        domain: "css-tricks.com"
     },
     {
         id: 3920197,
@@ -142,10 +177,11 @@ export const MOCK_STORIES: Story[] = [
         titleZh: "Linux 内核 6.14 发布：引入全新调度器",
         url: "https://kernel.org/",
         domain: "kernel.org",
-        score: 310,
-        by: "torvalds",
-        time: Math.floor(Date.now() / 1000) - 10000,
-        descendants: 88,
+
+        points: 310,
+        author: "torvalds",
+        postedAt: Math.floor(Date.now() / 1000) - 10000,
+        numComments: 88,
         category: "系统硬核",
         sentiment: {
             constructive: 60,

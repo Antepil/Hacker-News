@@ -11,35 +11,43 @@ datasource db {
 }
 
 model Story {
-  id          Int      @id
-  status      String   @default("PENDING") // PENDING, COMPLETED
+  id          Int     @id
+  status      String  @default("PENDING") // PENDING, COMPLETED
   title       String
-  titleZh     String?  // Translated Chinese title
+  titleZh     String? // Translated Chinese title
   url         String?
-  by          String?
-  score       Int      @default(0)
-  time        Int
-  descendants Int      @default(0)
+  author      String?
+  points      Int     @default(0)
+  postedAt    Int
+  numComments Int     @default(0)
   domain      String?
-  kids        String?  // Stored as JSON string of IDs
-  
-  updatedAt   DateTime @updatedAt
-  
+  type        String? // story, comment, job, etc.
+  kids        String? // Stored as JSON string of IDs
+  commentsDump String? // Stored as formatted text: "[Comment 1]: text..."
+
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+
   // Relation to AI Summary
-  aiSummary   AiSummary?
+  aiSummary AiSummary?
 }
 
 model AiSummary {
-  storyId     Int      @id
-  story       Story    @relation(fields: [storyId], references: [id])
-  
-  technical   String   // Markdown
-  layman      String   // Text
-  comments    String   // Markdown
-  keywords    String   // JSON string of string[]
-  sentiment   String   // JSON string: { constructive: number, technical: number, controversial: number }
-  
-  createdAt   DateTime @default(now())
+  storyId Int   @id
+  story   Story @relation(fields: [storyId], references: [id])
+
+  technical String // Markdown
+  technicalZh String? // Chinese Markdown
+
+  layman    String // Text
+  laymanZh  String? // Chinese Text
+
+  comments  String // Markdown
+  commentsZh String? // Chinese Markdown
+  keywords  String // JSON string of string[]
+  sentiment String // JSON string: { constructive: number, technical: number, controversial: number }
+
+  createdAt DateTime @default(now())
 }
 
 model CronLock {

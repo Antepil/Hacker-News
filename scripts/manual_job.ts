@@ -1,5 +1,6 @@
 import { prisma } from '../src/lib/db';
-import { fetchTopStoryIds, fetchItem } from '../src/lib/hn-service';
+import { fetchTopStoryIds } from '../src/lib/hn-service';
+import { fetchStoryWithComments } from '../src/lib/ai/fetcher';
 
 async function main() {
     console.log('Starting manual job...');
@@ -26,9 +27,13 @@ async function main() {
                     where: { id },
                 });
 
+                // Fetch Full Story + Comments using AI Fetcher (it has the logic for commentsDump)
+                const result = await fetchStoryWithComments(id);
+                if (!result) return;
+                const { story: item } = result;
+
                 if (existing) {
                     // Update regardless of status for this manual run to ensure freshness
-                    const item = await fetchItem(id);
                     if (item && !item.deleted && !item.dead) {
                         let domain = '';
                         if (item.url) {
@@ -44,12 +49,13 @@ async function main() {
                             data: {
                                 title: item.title || 'Untitled',
                                 url: item.url,
-                                by: item.by,
-                                score: item.score || 0,
-                                time: item.time,
-                                descendants: item.descendants || 0,
+                                author: item.author,
+                                points: item.points || 0,
+                                postedAt: item.postedAt,
+                                numComments: item.numComments || 0,
                                 domain,
                                 kids: item.kids ? JSON.stringify(item.kids) : undefined,
+                                commentsDump: item.commentsDump, // Store Comments Dump
                                 // Update status if needed, or keep it
                             }
                         });
@@ -57,7 +63,6 @@ async function main() {
                     }
                 } else {
                     // New Story
-                    const item = await fetchItem(id);
                     if (item && !item.deleted && !item.dead) {
                         let domain = '';
                         if (item.url) {
@@ -72,12 +77,13 @@ async function main() {
                                 id: item.id,
                                 title: item.title || 'Untitled',
                                 url: item.url,
-                                by: item.by,
-                                score: item.score || 0,
-                                time: item.time,
-                                descendants: item.descendants || 0,
+                                author: item.author,
+                                points: item.points || 0,
+                                postedAt: item.postedAt,
+                                numComments: item.numComments || 0,
                                 domain,
                                 kids: item.kids ? JSON.stringify(item.kids) : undefined,
+                                commentsDump: item.commentsDump, // Store Comments Dump
                                 status: 'PENDING',
                             }
                         });
