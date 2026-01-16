@@ -80,7 +80,7 @@ async function main() {
                                 url: item.url,
                                 author: item.author,
                                 points: item.points || 0,
-                                postedAt: item.postedAt,
+                                postedAt: item.postedAt || Math.floor(Date.now() / 1000),
                                 numComments: item.numComments || 0,
                                 domain,
                                 kids: item.kids ? JSON.stringify(item.kids) : undefined,
