@@ -9,9 +9,13 @@ const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 export function StoryList() {
     const { t } = useLanguage();
-    const { data: stories, error, isLoading } = useSWR<Story[]>('/api/stories', fetcher);
+    const { data, error, isLoading } = useSWR<Story[] | { error: string }>('/api/stories', fetcher);
 
-    if (error) return <div className="text-center py-10 text-red-500">{t('Failed to load stories.')}</div>;
+    // Safety check: Ensure data is an array before using it
+    const stories = Array.isArray(data) ? data : null;
+    const serverError = !Array.isArray(data) && data ? data : null;
+
+    if (error || serverError) return <div className="text-center py-10 text-red-500">{t('Failed to load stories.')}</div>;
     if (isLoading) return <div className="text-center py-10">{t('Loading stories...')}</div>;
 
     if (!stories || stories.length === 0) {
