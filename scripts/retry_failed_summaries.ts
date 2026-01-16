@@ -44,6 +44,9 @@ async function main() {
                 commentsDump: dbStory.commentsDump!
             };
 
+            // Allow empty string (0 comments)
+            if (dbStory.commentsDump === null) return;
+
             try {
                 // 1. Fetch fresh data (in case it's an Ask HN with missing text)
                 const freshData = await fetchStoryWithComments(dbStory.id);

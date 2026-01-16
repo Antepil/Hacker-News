@@ -98,10 +98,10 @@ export function InsightCard({ story }: InsightCardProps) {
 
             <CardContent className="flex-1 overflow-hidden flex flex-col min-h-0">
                 <Tabs defaultValue="summary" className="w-full h-full flex flex-col">
-                    <TabsList className="grid w-full grid-cols-3 mb-2 bg-slate-100 dark:bg-slate-800 h-7 p-0.5 shrink-0">
+                    <TabsList className={`grid w-full mb-2 bg-slate-100 dark:bg-slate-800 h-7 p-0.5 shrink-0 ${aiComments ? 'grid-cols-3' : 'grid-cols-2'}`}>
                         <TabsTrigger value="summary" className="text-[11px] h-full">{t('Summary') || 'Summary'}</TabsTrigger>
                         <TabsTrigger value="interpretation" className="text-[11px] h-full">{t('Interpretation') || 'Interpretation'}</TabsTrigger>
-                        <TabsTrigger value="comments" className="text-[11px] h-full">{t('Comments') || 'Comments'}</TabsTrigger>
+                        {aiComments && <TabsTrigger value="comments" className="text-[11px] h-full">{t('Comments') || 'Comments'}</TabsTrigger>}
                     </TabsList>
 
                     <div className="flex-1 overflow-y-auto pr-1 min-h-0">

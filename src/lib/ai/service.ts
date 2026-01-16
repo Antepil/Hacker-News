@@ -61,7 +61,8 @@ export async function generateStorySummary(
   """
 
   Top Comments:
-  ${commentsDump}
+  Top Comments:
+  ${commentsDump ? commentsDump : "(No comments provided. Skip comment analysis.)"}
 
   Output a valid JSON object. Ensure all strings are properly escaped (e.g., " should be \").
   Do NOT use Markdown code blocks. Just output the raw JSON string.
@@ -71,8 +72,8 @@ export async function generateStorySummary(
     "technicalZh": "Translate the technical summary into Professional Chinese (Markdown bullet points).",
     "layman": "One short paragraph explaining the significance in plain English.",
     "laymanZh": "Translate the layman summary into Chinese.",
-    "comments": "Provide exactly 3 distinct interpretations/takeaways from the comments. Format as a Markdown list with 3 bullet points. Each point should capture a unique perspective or valid criticism found in the discussion.",
-    "commentsZh": "Translate the comments interpretations into Chinese (Markdown bullet points).",
+    "comments": "Provide exactly 3 distinct interpretations/takeaways from the comments. Format as a Markdown list with 3 bullet points. Each point should capture a unique perspective or valid criticism found in the discussion. IF NO COMMENTS ARE PROVIDED, return an empty string.",
+    "commentsZh": "Translate the comments interpretations into Chinese (Markdown bullet points). IF NO COMMENTS, return empty string.",
     "keywords": ["tag1", "tag2", "tag3"],
     "sentiment": {
        "constructive": 0-100,
@@ -110,7 +111,22 @@ async function generateOpenAI(apiKey: string, baseURL: string | undefined, model
     const content = response.choices[0]?.message?.content;
     if (!content) return null;
 
-    return JSON.parse(content) as GeneratedSummary;
+    try {
+        const parsed = JSON.parse(content);
+        return {
+            technical: parsed.technical || 'No technical summary available.',
+            technicalZh: parsed.technicalZh || '暂无技术摘要。',
+            layman: parsed.layman || 'No interpretation available.',
+            laymanZh: parsed.laymanZh || '暂无通俗解读。',
+            comments: parsed.comments || '',
+            commentsZh: parsed.commentsZh || '',
+            keywords: Array.isArray(parsed.keywords) ? parsed.keywords : [],
+            sentiment: parsed.sentiment || { constructive: 50, technical: 50, controversial: 0 }
+        };
+    } catch (e) {
+        console.error('OpenAI JSON Parse Error:', e);
+        return null;
+    }
 }
 
 async function generateMiniMax(apiKey: string, endpoint: string, model: string, prompt: string): Promise<GeneratedSummary | null> {
@@ -157,7 +173,17 @@ async function generateMiniMax(apiKey: string, endpoint: string, model: string, 
     const jsonString = content.replace(/```json/g, '').replace(/```/g, '').trim();
 
     try {
-        return JSON.parse(jsonString) as GeneratedSummary;
+        const parsed = JSON.parse(jsonString);
+        return {
+            technical: parsed.technical || 'No technical summary available.',
+            technicalZh: parsed.technicalZh || '暂无技术摘要。',
+            layman: parsed.layman || 'No interpretation available.',
+            laymanZh: parsed.laymanZh || '暂无通俗解读。',
+            comments: parsed.comments || '',
+            commentsZh: parsed.commentsZh || '',
+            keywords: Array.isArray(parsed.keywords) ? parsed.keywords : [],
+            sentiment: parsed.sentiment || { constructive: 50, technical: 50, controversial: 0 }
+        };
     } catch (e) {
         console.error(`[MiniMax] JSON Parse Error. Raw Content:`, content);
         throw e;

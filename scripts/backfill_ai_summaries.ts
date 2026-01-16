@@ -14,7 +14,8 @@ async function processStories(stories: any[], label: string = 'Processing') {
         console.log(`\n--- ${label} Batch ${Math.floor(i / BATCH_SIZE) + 1} (${batch.length} stories) ---`);
 
         await Promise.all(batch.map(async (dbStory: any) => {
-            if (!dbStory.commentsDump) return;
+            // Allow empty string (0 comments), only skip strictly null if that ever happens (though query filters it)
+            if (dbStory.commentsDump === null) return;
 
             console.log(`${label}: ${dbStory.title.substring(0, 40)}... (ID: ${dbStory.id})`);
 
