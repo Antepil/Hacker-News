@@ -26,10 +26,10 @@ async function main() {
                         id: item.id,
                         title: item.title || 'Untitled',
                         url: item.url,
-                        by: item.by || 'unknown',
-                        time: item.time || Math.floor(Date.now() / 1000),
-                        score: item.score || 0,
-                        descendants: item.descendants || 0,
+                        author: item.by || 'unknown',
+                        postedAt: item.time || Math.floor(Date.now() / 1000),
+                        points: item.score || 0,
+                        numComments: item.descendants || 0,
                         kids: JSON.stringify(item.kids || []),
                     }
                 });
